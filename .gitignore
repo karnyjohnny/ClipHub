@@ -1,8 +1,25 @@
 node_modules/
 build/
+build*/
 dist/
 coverage/
 .DS_Store
 *.log
 .env*
 !.env.example
+
+# CMake build outputs
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+
+# Compilations & Databases
+*.o
+*.obj
+*.a
+*.res
+*.db
+*.db-wal
+*.db-shm

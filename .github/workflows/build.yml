@@ -9,7 +9,7 @@ on:
     types: [ published ]
 
 jobs:
-  # Job 1: Native Windows MSVC Build & Packaging
+  # Job 1: Native Windows Build (MSVC / Windows SDK)
   build-windows:
     runs-on: windows-latest
 
@@ -17,12 +17,13 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up MSVC & Developer Command Prompt
-        uses: ilammy/msvc-dev-cmd@v1
+      - name: Clean Any Stale Build Folders
+        shell: bash
+        run: rm -rf build build-tests build-win64
 
-      - name: Configure CMake (Windows 7 Target)
+      - name: Configure CMake (Native Windows)
         run: |
-          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+          cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build ClipHub & Tests
         run: |
@@ -36,7 +37,11 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist
-          Copy-Item -Path build\Release\ClipHub.exe -Destination dist\
+          if (Test-Path "build\Release\ClipHub.exe") {
+            Copy-Item -Path build\Release\ClipHub.exe -Destination dist\
+          } elseif (Test-Path "build\ClipHub.exe") {
+            Copy-Item -Path build\ClipHub.exe -Destination dist\
+          }
           Copy-Item -Path README.md -Destination dist\
           Copy-Item -Path LICENSE -Destination dist\
           Copy-Item -Path docs\win7-compatibility.md -Destination dist\
@@ -49,7 +54,7 @@ jobs:
           path: ClipHub-Windows-x64.zip
           retention-days: 14
 
-  # Job 2: Linux Cross-Compilation with MinGW-w64
+  # Job 2: Linux Native Core Tests & MinGW-w64 Cross-Compilation
   build-cross-linux:
     runs-on: ubuntu-latest
 
@@ -61,6 +66,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64 cmake make
+
+      - name: Clean Any Stale Build Folders
+        run: |
+          rm -rf build-tests build-win64
 
       - name: Build Core Tests (Linux Native)
         run: |

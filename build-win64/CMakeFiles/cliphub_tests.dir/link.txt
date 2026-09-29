@@ -1,3 +1,0 @@
-/usr/bin/cmake -E rm -f CMakeFiles/cliphub_tests.dir/objects.a
-/usr/bin/x86_64-w64-mingw32-ar qc CMakeFiles/cliphub_tests.dir/objects.a @CMakeFiles/cliphub_tests.dir/objects1
-/usr/bin/x86_64-w64-mingw32-g++-posix -O3 -DNDEBUG -Wl,--whole-archive CMakeFiles/cliphub_tests.dir/objects.a -Wl,--no-whole-archive -o cliphub_tests.exe -Wl,--out-implib,libcliphub_tests.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles/cliphub_tests.dir/linkLibs.rsp

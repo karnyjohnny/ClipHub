@@ -1,2 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-ar qc libcliphub_core.a CMakeFiles/cliphub_core.dir/src/core/ClipboardItem.cpp.obj CMakeFiles/cliphub_core.dir/src/core/Config.cpp.obj CMakeFiles/cliphub_core.dir/src/core/HistoryRepository.cpp.obj CMakeFiles/cliphub_core.dir/src/core/SearchEngine.cpp.obj CMakeFiles/cliphub_core.dir/src/storage/Database.cpp.obj CMakeFiles/cliphub_core.dir/src/platform/Logger.cpp.obj
-/usr/bin/x86_64-w64-mingw32-ranlib libcliphub_core.a

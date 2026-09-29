@@ -1,2 +1,0 @@
-/usr/bin/x86_64-w64-mingw32-ar qc libsqlite3.a CMakeFiles/sqlite3.dir/third_party/sqlite/sqlite3.c.obj
-/usr/bin/x86_64-w64-mingw32-ranlib libsqlite3.a

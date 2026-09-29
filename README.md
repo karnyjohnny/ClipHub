@@ -119,25 +119,31 @@ Detailed architectural diagrams and component descriptions can be found in [`doc
 ```cmd
 git clone https://github.com/cliphub/cliphub.git
 cd cliphub
-cmake -B build -G "Visual Studio 17 2022" -A x64
+# Automatic compiler detection (Visual Studio / Ninja / MSVC):
+cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
-Output executable: `build\Release\ClipHub.exe`
+Output executable: `build\Release\ClipHub.exe` (or `build\ClipHub.exe`)
+
+*(Note: If explicitly specifying `-G "Visual Studio 17 2022"`, ensure you are running on Windows with VS 2022 installed).*
 
 ### Option B: Cross-Compile from Linux (MinGW-w64)
 ```bash
 sudo apt-get install -y g++-mingw-w64-x86-64 cmake make
+rm -rf build-win64
 cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw64.cmake -B build-win64 -DCMAKE_BUILD_TYPE=Release
 cmake --build build-win64 -j$(nproc)
 ```
 Output executable: `build-win64/ClipHub.exe` (statically linked, zero runtime DLL dependencies).
 
-### Option C: Run Native Core Test Suite
+### Option C: Run Native Core Test Suite (Linux / macOS)
 ```bash
+rm -rf build-tests
 cmake -B build-tests -DCMAKE_BUILD_TYPE=Release
 cmake --build build-tests -j$(nproc)
 ./build-tests/cliphub_tests
 ```
+*(If you ever see a CMakeCache.txt directory mismatch error, simply `rm -rf build-tests` and re-run).*
 
 ---
 

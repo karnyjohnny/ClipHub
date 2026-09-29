@@ -1,7 +1,0 @@
-/app/applet/build-win64/CMakeFiles/sqlite3.dir
-/app/applet/build-win64/CMakeFiles/cliphub_core.dir
-/app/applet/build-win64/CMakeFiles/cliphub_tests.dir
-/app/applet/build-win64/CMakeFiles/ClipHub.dir
-/app/applet/build-win64/CMakeFiles/test.dir
-/app/applet/build-win64/CMakeFiles/edit_cache.dir
-/app/applet/build-win64/CMakeFiles/rebuild_cache.dir
