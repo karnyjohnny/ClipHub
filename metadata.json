@@ -1,0 +1,6 @@
+{
+  "name": "ClipHub - Ultra-Lightweight Windows 7 Clipboard Manager",
+  "description": "High-performance native Win32/Direct2D clipboard manager optimized for low-end hardware (Dell Latitude E5500, Core 2 Duo, 2GB RAM). Features Alt+V quick popup, text/image history, SQLite storage, and sub-15MB RAM footprint.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,1 @@
+ libcliphub_core.a -ld2d1 -ldwrite -lwindowscodecs -lole32 -lshell32 -luser32 -lgdi32 -ladvapi32 libsqlite3.a -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32 

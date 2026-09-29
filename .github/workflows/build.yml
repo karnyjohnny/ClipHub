@@ -1,0 +1,78 @@
+name: Build & Test ClipHub
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  release:
+    types: [ published ]
+
+jobs:
+  # Job 1: Native Windows MSVC Build & Packaging
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up MSVC & Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure CMake (Windows 7 Target)
+        run: |
+          cmake -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build ClipHub & Tests
+        run: |
+          cmake --build build --config Release --parallel
+
+      - name: Run Core Unit Tests
+        run: |
+          ctest --test-dir build -C Release --output-on-failure
+
+      - name: Package Release Artifact
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item -Path build\Release\ClipHub.exe -Destination dist\
+          Copy-Item -Path README.md -Destination dist\
+          Copy-Item -Path LICENSE -Destination dist\
+          Copy-Item -Path docs\win7-compatibility.md -Destination dist\
+          Compress-Archive -Path dist\* -DestinationPath ClipHub-Windows-x64.zip
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClipHub-Windows-x64
+          path: ClipHub-Windows-x64.zip
+          retention-days: 14
+
+  # Job 2: Linux Cross-Compilation with MinGW-w64
+  build-cross-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install MinGW-w64 & Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64 cmake make
+
+      - name: Build Core Tests (Linux Native)
+        run: |
+          cmake -B build-tests -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-tests -j$(nproc)
+          ./build-tests/cliphub_tests
+
+      - name: Cross-Compile Win32 ClipHub.exe (Static MinGW)
+        run: |
+          cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw64.cmake -B build-win64 -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-win64 -j$(nproc)
+
+      - name: Verify Executable Architecture
+        run: |
+          file build-win64/ClipHub.exe

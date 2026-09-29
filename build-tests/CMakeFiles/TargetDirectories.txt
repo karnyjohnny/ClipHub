@@ -1,0 +1,6 @@
+/app/applet/build-tests/CMakeFiles/sqlite3.dir
+/app/applet/build-tests/CMakeFiles/cliphub_core.dir
+/app/applet/build-tests/CMakeFiles/cliphub_tests.dir
+/app/applet/build-tests/CMakeFiles/test.dir
+/app/applet/build-tests/CMakeFiles/edit_cache.dir
+/app/applet/build-tests/CMakeFiles/rebuild_cache.dir

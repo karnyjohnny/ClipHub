@@ -1,0 +1,2 @@
+/usr/bin/ar qc libcliphub_core.a CMakeFiles/cliphub_core.dir/src/core/ClipboardItem.cpp.o CMakeFiles/cliphub_core.dir/src/core/Config.cpp.o CMakeFiles/cliphub_core.dir/src/core/HistoryRepository.cpp.o CMakeFiles/cliphub_core.dir/src/core/SearchEngine.cpp.o CMakeFiles/cliphub_core.dir/src/storage/Database.cpp.o CMakeFiles/cliphub_core.dir/src/platform/Logger.cpp.o
+/usr/bin/ranlib libcliphub_core.a

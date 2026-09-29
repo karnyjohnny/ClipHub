@@ -1,0 +1,61 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "windows-msvc-release",
+      "displayName": "Windows x64 MSVC Release",
+      "description": "Optimized release build targeting Windows 7 SP1 x64",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-msvc",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "linux-tests",
+      "displayName": "Linux Native Core Tests",
+      "description": "Native build for unit tests and verification",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build-tests",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "mingw-cross-win64",
+      "displayName": "MinGW x64 Cross-Compile",
+      "description": "Cross-compile static ClipHub.exe from Linux",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build-win64",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-mingw64.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-release",
+      "configurePreset": "windows-msvc-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "build-tests",
+      "configurePreset": "linux-tests"
+    },
+    {
+      "name": "build-mingw",
+      "configurePreset": "mingw-cross-win64"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "run-tests",
+      "configurePreset": "linux-tests",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
