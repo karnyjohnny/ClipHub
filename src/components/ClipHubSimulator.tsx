@@ -368,7 +368,8 @@ export const ClipHubSimulator: React.FC = () => {
           >
             {/* Popup Header & Search Input */}
             <div className="p-2.5 bg-[#181818] border-b border-[#2A2A2A] flex items-center gap-2.5">
-              <Search className="w-4 h-4 text-gray-400 shrink-0 ml-1" />
+              <img src="/resources/cliphub.png" alt="ClipHub" className="w-4 h-4 rounded shrink-0 ml-1 shadow-sm" />
+              <Search className="w-3.5 h-3.5 text-gray-400 shrink-0" />
               <input
                 ref={searchInputRef}
                 type="text"

@@ -3,6 +3,12 @@
 #include "platform/Logger.h"
 
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <algorithm>
 
@@ -30,6 +36,10 @@ bool PopupPicker::create(void* parentHwnd) {
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_DROPSHADOW;
     wc.lpfnWndProc = PopupPicker::WndProc;
     wc.hInstance = hInstance;
+    wc.hIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(101));
+    wc.hIconSm = LoadIconW(hInstance, MAKEINTRESOURCEW(101));
+    if (!wc.hIcon) wc.hIcon = LoadIconW(nullptr, (LPCWSTR)IDI_APPLICATION);
+    if (!wc.hIconSm) wc.hIconSm = wc.hIcon;
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = nullptr; // Handled by Direct2D
     wc.lpszClassName = POPUP_CLASS_NAME;
@@ -169,7 +179,7 @@ void PopupPicker::updateFilteredList() {
     if (!m_repo) return;
     m_items = m_repo->search(m_searchQuery);
     if (m_selectedIndex >= static_cast<int>(m_items.size())) {
-        m_selectedIndex = std::max(0, static_cast<int>(m_items.size()) - 1);
+        m_selectedIndex = (std::max)(0, static_cast<int>(m_items.size()) - 1);
     }
 }
 
@@ -397,13 +407,13 @@ LRESULT PopupPicker::handleMessage(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 return 0;
             } else if (wParam == VK_DOWN) {
                 if (!m_items.empty()) {
-                    m_selectedIndex = (m_selectedIndex + 1) % m_items.size();
+                    m_selectedIndex = static_cast<int>((m_selectedIndex + 1) % m_items.size());
                     InvalidateRect(hwnd, nullptr, FALSE);
                 }
                 return 0;
             } else if (wParam == VK_UP) {
                 if (!m_items.empty()) {
-                    m_selectedIndex = (m_selectedIndex - 1 + m_items.size()) % m_items.size();
+                    m_selectedIndex = static_cast<int>((m_selectedIndex - 1 + static_cast<int>(m_items.size())) % m_items.size());
                     InvalidateRect(hwnd, nullptr, FALSE);
                 }
                 return 0;

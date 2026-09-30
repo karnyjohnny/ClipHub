@@ -65,6 +65,7 @@ export const REPO_FILES: RepoFile[] = [
   { path: 'cmake/toolchain-mingw64.cmake', category: 'build', description: 'MinGW-w64 x64 cross-compilation toolchain script', language: 'cmake' },
   { path: '.github/workflows/build.yml', category: 'build', description: 'GitHub Actions automated build, test & packaging workflow', language: 'yaml' },
   { path: 'resources/resource.h', category: 'build', description: 'Win32 resource identifiers', language: 'cpp' },
+  { path: 'resources/cliphub.ico', category: 'build', description: 'Multi-resolution Windows application & tray icon (16x16 to 256x256)', language: 'binary' },
   { path: 'resources/ClipHub.rc', category: 'build', description: 'Windows 7 version info and resource manifest', language: 'rc' },
   { path: 'LICENSE', category: 'build', description: 'MIT Open Source License', language: 'text' },
   { path: 'README.md', category: 'docs', description: 'Technical documentation & quick start guide', language: 'markdown' },

@@ -8,6 +8,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Optimization and warning flags
 if(MSVC)
     add_compile_options(/W4 /WX- /O2 /Oi /Gy /GS- /D_CRT_SECURE_NO_WARNINGS /DUNICODE /D_UNICODE)
+    add_compile_definitions(
+        _WIN32_WINNT=0x0601
+        WINVER=0x0601
+        NTDDI_VERSION=0x06010000
+        UNICODE
+        _UNICODE
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
+        _CRT_SECURE_NO_WARNINGS
+    )
 else()
     add_compile_options(-Wall -Wextra -Wpedantic -O2 -pipe)
     if(WIN32)
@@ -18,6 +28,8 @@ else()
             NTDDI_VERSION=0x06010000
             UNICODE
             _UNICODE
+            NOMINMAX
+            WIN32_LEAN_AND_MEAN
         )
     endif()
 endif()
@@ -25,6 +37,7 @@ endif()
 # Include directories
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/resources
     ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqlite
 )
 

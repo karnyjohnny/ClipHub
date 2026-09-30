@@ -12,8 +12,13 @@ export async function downloadRepositoryZip(onProgress?: (msg: string) => void):
       if (onProgress) onProgress(`Adding ${file.path}...`);
       const res = await fetch(`/${file.path}`);
       if (res.ok) {
-        const text = await res.text();
-        zip.file(file.path, text);
+        if (file.path.endsWith('.ico') || file.path.endsWith('.png') || file.path.endsWith('.exe')) {
+          const buffer = await res.arrayBuffer();
+          zip.file(file.path, buffer);
+        } else {
+          const text = await res.text();
+          zip.file(file.path, text);
+        }
       }
     } catch (e) {
       console.warn(`Could not add ${file.path} to zip`, e);

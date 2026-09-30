@@ -2,6 +2,12 @@
 #include "platform/Logger.h"
 
 #ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <windows.h>
 #include <shellapi.h>
 
@@ -30,13 +36,19 @@ bool Win32Tray::init(void* hwndHandle, uint32_t messageId, TrayCallback callback
 
     HWND hwnd = static_cast<HWND>(m_hwnd);
 
+    HINSTANCE hInst = GetModuleHandleW(nullptr);
+    HICON hAppIcon = LoadIconW(hInst, MAKEINTRESOURCEW(101));
+    if (!hAppIcon) {
+        hAppIcon = LoadIconW(nullptr, (LPCWSTR)IDI_APPLICATION);
+    }
+
     NOTIFYICONDATAW nid = {};
     nid.cbSize = sizeof(NOTIFYICONDATAW);
     nid.hWnd = hwnd;
     nid.uID = 1;
     nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
     nid.uCallbackMessage = m_msgId;
-    nid.hIcon = LoadIconW(nullptr, (LPCWSTR)IDI_APPLICATION);
+    nid.hIcon = hAppIcon;
     wcscpy_s(nid.szTip, L"ClipHub - Ultra-Lightweight Clipboard Manager");
 
     if (!Shell_NotifyIconW(NIM_ADD, &nid)) {
