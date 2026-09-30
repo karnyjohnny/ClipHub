@@ -10,60 +10,7 @@ on:
     types: [ published ]
 
 jobs:
-  # Job 1: Native Windows Build (MSVC / Windows SDK)
-  build-windows:
-    runs-on: windows-latest
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Clean Any Stale Build Folders
-        shell: bash
-        run: rm -rf build build-tests build-win64
-
-      - name: Configure CMake (Native Windows)
-        run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build ClipHub & Tests
-        run: |
-          cmake --build build --config Release --parallel
-
-      - name: Run Core Unit Tests
-        run: |
-          ctest --test-dir build -C Release --output-on-failure
-
-      - name: Package Release Artifact
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Force -Path dist
-          if (Test-Path "build\Release\ClipHub.exe") {
-            Copy-Item -Path build\Release\ClipHub.exe -Destination dist\
-          } elseif (Test-Path "build\ClipHub.exe") {
-            Copy-Item -Path build\ClipHub.exe -Destination dist\
-          }
-          if (Test-Path "build\Release\cliphub_tests.exe") {
-            Copy-Item -Path build\Release\cliphub_tests.exe -Destination dist\
-          } elseif (Test-Path "build\cliphub_tests.exe") {
-            Copy-Item -Path build\cliphub_tests.exe -Destination dist\
-          }
-          Copy-Item -Path README.md -Destination dist\
-          Copy-Item -Path LICENSE -Destination dist\
-          Copy-Item -Path docs\win7-compatibility.md -Destination dist\
-          Compress-Archive -Path dist\* -DestinationPath dist\ClipHub-Windows-x64.zip
-
-      - name: Upload Windows Binaries Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ClipHub-Windows-x64
-          path: |
-            dist/ClipHub.exe
-            dist/cliphub_tests.exe
-            dist/ClipHub-Windows-x64.zip
-          retention-days: 14
-
-  # Job 2: Linux Native Core Tests & MinGW-w64 Cross-Compilation
+  # Jedyny job, którego potrzebujemy do kompilacji pod Windowsa: Linux + MinGW-w64 (statyczny link)
   build-cross-linux:
     runs-on: ubuntu-latest
 
@@ -78,7 +25,7 @@ jobs:
 
       - name: Clean Any Stale Build Folders
         run: |
-          rm -rf build-tests build-win64
+          rm -rf build-tests build-win64 dist
 
       - name: Build Core Tests (Linux Native)
         run: |
@@ -86,7 +33,7 @@ jobs:
           cmake --build build-tests -j$(nproc)
           ./build-tests/cliphub_tests
 
-      - name: Cross-Compile Win32 ClipHub.exe (Static MinGW)
+      - name: Cross-Compile Win64 ClipHub.exe (Static MinGW)
         run: |
           cmake -DCMAKE_TOOLCHAIN_FILE=cmake/toolchain-mingw64.cmake -B build-win64 -DCMAKE_BUILD_TYPE=Release
           cmake --build build-win64 -j$(nproc)
@@ -95,10 +42,34 @@ jobs:
         run: |
           file build-win64/ClipHub.exe
 
-  # Job 3: Automated GitHub Release with Binaries
+      - name: Package Release Artifact
+        run: |
+          mkdir -p dist
+          if [ -f "build-win64/ClipHub.exe" ]; then
+            cp build-win64/ClipHub.exe dist/
+          fi
+          if [ -f "build-win64/cliphub_tests.exe" ]; then
+            cp build-win64/cliphub_tests.exe dist/
+          fi
+          cp README.md dist/
+          cp LICENSE dist/
+          cp docs/win7-compatibility.md dist/
+          cd dist && zip -r ClipHub-Windows-x64.zip *
+
+      - name: Upload Windows Binaries Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ClipHub-Windows-x64
+          path: |
+            dist/ClipHub.exe
+            dist/cliphub_tests.exe
+            dist/ClipHub-Windows-x64.zip
+          retention-days: 14
+
+  # Job publikujący Release na GitHubie
   publish-release:
     name: Create GitHub Release & Upload Binaries
-    needs: [build-windows, build-cross-linux]
+    needs: [build-cross-linux]
     if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'release'
     runs-on: ubuntu-latest
     permissions:
@@ -133,18 +104,7 @@ jobs:
           body: |
             ### ClipHub Release (Windows 7 SP1 x64)
             Ultra-lightweight Win32 / Direct2D 1.0 native clipboard manager.
-            Optimized for Dell Latitude E5500 (Core 2 Duo, 2 GB DDR2, 7200 RPM HDD).
-
-            #### Binaries Attached:
-            - **`ClipHub.exe`**: Standalone native Windows 7 executable (zero dependencies, direct download).
-            - **`ClipHub-Windows-x64.zip`**: Complete distribution bundle with documentation & licenses.
-            - **`cliphub_tests.exe`**: Automated test suite executable.
-
-            #### Features in this Release:
-            - Alt+V instant hardware-accelerated Direct2D popup picker.
-            - Full Polish diacritics support (UTF-8 to UTF-16 Unicode decoding).
-            - Fixed text boundary clipping & single-line ellipsis trimming.
-            - Non-blocking SQLite 3.45 WAL async persistence queue.
+            Built with MinGW-w64 (Zero MSVC / Universal CRT dependencies).
           draft: false
           prerelease: false
           files: |
