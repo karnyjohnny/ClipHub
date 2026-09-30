@@ -118,8 +118,15 @@ if(WIN32)
         advapi32
     )
 
-    # Fully static runtime to guarantee 0-dependency portability on Windows 7
-    if(MINGW)
+    # --- POPRAWKA DLA WINDOWS 7 (MSVC) ---
+    if(MSVC)
+        # Wymuś statyczne linkowanie runtime (/MT), żeby uniknąć brakujących UCRT/VCRuntime na Windows 7
+        set_property(TARGET ClipHub PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+        
+        # Wymuś wersję subsystemu Windows 7 (6.1) w linkerze
+        target_link_options(ClipHub PRIVATE "/SUBSYSTEM:WINDOWS,6.01")
+    elseif(MINGW)
+        # Fully static runtime to guarantee 0-dependency portability on Windows 7
         target_link_options(ClipHub PRIVATE -static -static-libgcc -static-libstdc++)
     endif()
 endif()
