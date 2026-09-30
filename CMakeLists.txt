@@ -5,6 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+if(MSVC)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+endif()
+
 # Optimization and warning flags
 if(MSVC)
     add_compile_options(/W4 /WX- /O2 /Oi /Gy /GS- /D_CRT_SECURE_NO_WARNINGS /DUNICODE /D_UNICODE)
@@ -120,9 +124,6 @@ if(WIN32)
 
     # --- POPRAWKA DLA WINDOWS 7 (MSVC) ---
     if(MSVC)
-        # Wymuś statyczne linkowanie runtime (/MT), żeby uniknąć brakujących UCRT/VCRuntime na Windows 7
-        set_property(TARGET ClipHub PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
-        
         # Wymuś wersję subsystemu Windows 7 (6.1) w linkerze
         target_link_options(ClipHub PRIVATE "/SUBSYSTEM:WINDOWS,6.01")
     elseif(MINGW)
