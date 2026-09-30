@@ -81,7 +81,14 @@ void ClipboardItem::updatePreview() {
             prevSpace = false;
         }
 
-        if (preview.length() >= 120) {
+        if (preview.length() >= 90) {
+            // Ensure we never split a multi-byte UTF-8 sequence
+            while (!preview.empty() && (static_cast<unsigned char>(preview.back()) & 0xC0) == 0x80) {
+                preview.pop_back();
+            }
+            if (!preview.empty() && (static_cast<unsigned char>(preview.back()) & 0x80) != 0) {
+                preview.pop_back();
+            }
             preview.append("...");
             break;
         }

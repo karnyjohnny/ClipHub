@@ -3,6 +3,7 @@ name: Build & Test ClipHub
 on:
   push:
     branches: [ main, master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main, master ]
   release:
@@ -42,16 +43,24 @@ jobs:
           } elseif (Test-Path "build\ClipHub.exe") {
             Copy-Item -Path build\ClipHub.exe -Destination dist\
           }
+          if (Test-Path "build\Release\cliphub_tests.exe") {
+            Copy-Item -Path build\Release\cliphub_tests.exe -Destination dist\
+          } elseif (Test-Path "build\cliphub_tests.exe") {
+            Copy-Item -Path build\cliphub_tests.exe -Destination dist\
+          }
           Copy-Item -Path README.md -Destination dist\
           Copy-Item -Path LICENSE -Destination dist\
           Copy-Item -Path docs\win7-compatibility.md -Destination dist\
-          Compress-Archive -Path dist\* -DestinationPath ClipHub-Windows-x64.zip
+          Compress-Archive -Path dist\* -DestinationPath dist\ClipHub-Windows-x64.zip
 
-      - name: Upload Artifact
+      - name: Upload Windows Binaries Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ClipHub-Windows-x64
-          path: ClipHub-Windows-x64.zip
+          path: |
+            dist/ClipHub.exe
+            dist/cliphub_tests.exe
+            dist/ClipHub-Windows-x64.zip
           retention-days: 14
 
   # Job 2: Linux Native Core Tests & MinGW-w64 Cross-Compilation
@@ -65,7 +74,7 @@ jobs:
       - name: Install MinGW-w64 & Tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64 cmake make
+          sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64-posix cmake make
 
       - name: Clean Any Stale Build Folders
         run: |
@@ -85,3 +94,62 @@ jobs:
       - name: Verify Executable Architecture
         run: |
           file build-win64/ClipHub.exe
+
+  # Job 3: Automated GitHub Release with Binaries
+  publish-release:
+    name: Create GitHub Release & Upload Binaries
+    needs: [build-windows, build-cross-linux]
+    if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download Windows Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: ClipHub-Windows-x64
+          path: release-dist/
+
+      - name: Determine Release Tag
+        id: tag_info
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+            echo "name=ClipHub ${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v0.1.0" >> "$GITHUB_OUTPUT"
+            echo "name=ClipHub v0.1.0-win7-x64" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag_info.outputs.tag }}
+          name: ${{ steps.tag_info.outputs.name }}
+          body: |
+            ### ClipHub Release (Windows 7 SP1 x64)
+            Ultra-lightweight Win32 / Direct2D 1.0 native clipboard manager.
+            Optimized for Dell Latitude E5500 (Core 2 Duo, 2 GB DDR2, 7200 RPM HDD).
+
+            #### Binaries Attached:
+            - **`ClipHub.exe`**: Standalone native Windows 7 executable (zero dependencies, direct download).
+            - **`ClipHub-Windows-x64.zip`**: Complete distribution bundle with documentation & licenses.
+            - **`cliphub_tests.exe`**: Automated test suite executable.
+
+            #### Features in this Release:
+            - Alt+V instant hardware-accelerated Direct2D popup picker.
+            - Full Polish diacritics support (UTF-8 to UTF-16 Unicode decoding).
+            - Fixed text boundary clipping & single-line ellipsis trimming.
+            - Non-blocking SQLite 3.45 WAL async persistence queue.
+          draft: false
+          prerelease: false
+          files: |
+            release-dist/ClipHub.exe
+            release-dist/ClipHub-Windows-x64.zip
+            release-dist/cliphub_tests.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

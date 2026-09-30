@@ -73,6 +73,15 @@ D2D1_COLOR_F D2DContext::toD2DColor(const ColorRGBA& c) {
     return D2D1::ColorF(c.rF(), c.gF(), c.bF(), c.aF());
 }
 
+std::wstring D2DContext::utf8ToWide(const std::string& utf8) {
+    if (utf8.empty()) return L"";
+    int sizeNeeded = MultiByteToWideChar(CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), nullptr, 0);
+    if (sizeNeeded <= 0) return L"";
+    std::wstring result(sizeNeeded, 0);
+    MultiByteToWideChar(CP_UTF8, 0, utf8.data(), static_cast<int>(utf8.size()), &result[0], sizeNeeded);
+    return result;
+}
+
 } // namespace cliphub
 
 #endif

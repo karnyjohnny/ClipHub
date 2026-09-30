@@ -115,6 +115,28 @@ void MainWindow::createDeviceResources() {
             L"Segoe UI", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL, 11.0f * m_dpiScale, L"en-us", &m_fontSmall
         );
+
+        if (m_fontRegular) {
+            m_fontRegular->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+            IDWriteInlineObject* trimmingSign = nullptr;
+            if (SUCCEEDED(ctx.dwriteFactory()->CreateEllipsisTrimmingSign(m_fontRegular, &trimmingSign))) {
+                DWRITE_TRIMMING trimming = { DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0 };
+                m_fontRegular->SetTrimming(&trimming, trimmingSign);
+                trimmingSign->Release();
+            }
+        }
+        if (m_fontBold) {
+            m_fontBold->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+        }
+        if (m_fontSmall) {
+            m_fontSmall->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+            IDWriteInlineObject* trimmingSign = nullptr;
+            if (SUCCEEDED(ctx.dwriteFactory()->CreateEllipsisTrimmingSign(m_fontSmall, &trimmingSign))) {
+                DWRITE_TRIMMING trimming = { DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0 };
+                m_fontSmall->SetTrimming(&trimming, trimmingSign);
+                trimmingSign->Release();
+            }
+        }
     }
 }
 
@@ -227,6 +249,8 @@ void MainWindow::render() {
         float itBottom = itTop + itemH - 3.0f;
         D2D1_RECT_F itemRect = D2D1::RectF(16.0f, itTop, w - 16.0f, itBottom);
 
+        m_renderTarget->PushAxisAlignedClip(itemRect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+
         if (i == m_selectedIndex) {
             m_renderTarget->FillRectangle(itemRect, m_brushSelected);
             m_renderTarget->FillRectangle(D2D1::RectF(16.0f, itTop, 19.0f, itBottom), m_brushAccent);
@@ -243,15 +267,17 @@ void MainWindow::render() {
         if (m_fontBold) {
             m_renderTarget->DrawText(badge.c_str(), static_cast<UINT32>(badge.length()),
                                      m_fontBold, D2D1::RectF(32.0f, itTop + 10.0f, 62.0f, itBottom),
-                                     (item.type == ItemType::Text) ? m_brushAccent : m_brushPinned);
+                                     (item.type == ItemType::Text) ? m_brushAccent : m_brushPinned,
+                                     D2D1_DRAW_TEXT_OPTIONS_CLIP);
         }
 
         // Preview text
-        std::wstring prevW(item.previewText.begin(), item.previewText.end());
-        D2D1_RECT_F textBounds = D2D1::RectF(72.0f, itTop + 7.0f, w - 80.0f, itTop + 26.0f);
+        std::wstring prevW = D2DContext::utf8ToWide(item.previewText);
+        D2D1_RECT_F textBounds = D2D1::RectF(72.0f, itTop + 6.0f, w - 80.0f, itTop + 25.0f);
         if (m_fontRegular && m_brushText) {
             m_renderTarget->DrawText(prevW.c_str(), static_cast<UINT32>(prevW.length()),
-                                     m_fontRegular, textBounds, m_brushText);
+                                     m_fontRegular, textBounds, m_brushText,
+                                     D2D1_DRAW_TEXT_OPTIONS_CLIP);
         }
 
         // Subtitle metadata
@@ -260,11 +286,15 @@ void MainWindow::render() {
             : std::to_wstring(item.imageMeta.width) + L"x" + std::to_wstring(item.imageMeta.height) + L" Image";
         if (item.pinned) metaW += L"  ★ Pinned";
 
-        D2D1_RECT_F metaBounds = D2D1::RectF(72.0f, itTop + 26.0f, w - 80.0f, itBottom);
+        D2D1_RECT_F metaBounds = D2D1::RectF(72.0f, itTop + 26.0f, w - 80.0f, itBottom - 2.0f);
         if (m_fontSmall && m_brushTextSecondary) {
             m_renderTarget->DrawText(metaW.c_str(), static_cast<UINT32>(metaW.length()),
-                                     m_fontSmall, metaBounds, item.pinned ? m_brushPinned : m_brushTextSecondary);
+                                     m_fontSmall, metaBounds, 
+                                     item.pinned ? m_brushPinned : m_brushTextSecondary,
+                                     D2D1_DRAW_TEXT_OPTIONS_CLIP);
         }
+
+        m_renderTarget->PopAxisAlignedClip();
     }
 
     // 5. Footer Status Bar

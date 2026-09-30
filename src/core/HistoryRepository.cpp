@@ -176,7 +176,7 @@ std::vector<ClipboardItem> HistoryRepository::search(const std::string& query) {
     // Search in-memory cache first for lightning fast response
     std::string queryLower = query;
     std::transform(queryLower.begin(), queryLower.end(), queryLower.begin(), 
-                   [](unsigned char c) { return std::tolower(c); });
+                   [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
 
     std::vector<ClipboardItem> results;
     auto cached = m_cache.getAll();

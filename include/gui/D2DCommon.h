@@ -24,6 +24,7 @@ public:
 
     static float getDpiScaleForHwnd(HWND hwnd);
     static D2D1_COLOR_F toD2DColor(const ColorRGBA& c);
+    static std::wstring utf8ToWide(const std::string& utf8);
 
 private:
     D2DContext() = default;

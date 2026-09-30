@@ -116,6 +116,32 @@ void PopupPicker::createDeviceResources() {
             L"Consolas", nullptr, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
             DWRITE_FONT_STRETCH_NORMAL, 12.0f * m_dpiScale, L"en-us", &m_fontMono
         );
+
+        // Strict single-line display: prevent text wrapping and enable ellipsis trimming
+        if (m_fontRegular) {
+            m_fontRegular->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+            IDWriteInlineObject* trimmingSign = nullptr;
+            if (SUCCEEDED(ctx.dwriteFactory()->CreateEllipsisTrimmingSign(m_fontRegular, &trimmingSign))) {
+                DWRITE_TRIMMING trimming = { DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0 };
+                m_fontRegular->SetTrimming(&trimming, trimmingSign);
+                trimmingSign->Release();
+            }
+        }
+        if (m_fontBold) {
+            m_fontBold->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+        }
+        if (m_fontSmall) {
+            m_fontSmall->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+            IDWriteInlineObject* trimmingSign = nullptr;
+            if (SUCCEEDED(ctx.dwriteFactory()->CreateEllipsisTrimmingSign(m_fontSmall, &trimmingSign))) {
+                DWRITE_TRIMMING trimming = { DWRITE_TRIMMING_GRANULARITY_CHARACTER, 0, 0 };
+                m_fontSmall->SetTrimming(&trimming, trimmingSign);
+                trimmingSign->Release();
+            }
+        }
+        if (m_fontMono) {
+            m_fontMono->SetWordWrapping(DWRITE_WORD_WRAPPING_NO_WRAP);
+        }
     }
 }
 
@@ -230,21 +256,21 @@ void PopupPicker::render() {
     // Search text / placeholder
     std::wstring searchDisp = m_searchQuery.empty() 
         ? L"🔍  Type to search history..." 
-        : L"🔍  " + std::wstring(m_searchQuery.begin(), m_searchQuery.end());
+        : L"🔍  " + D2DContext::utf8ToWide(m_searchQuery);
 
     D2D1_RECT_F textRect = D2D1::RectF(14.0f, 12.0f, w - 16.0f, searchH);
     IDWriteTextFormat* sFont = m_searchQuery.empty() ? m_fontRegular : m_fontBold;
     ID2D1SolidColorBrush* sBrush = m_searchQuery.empty() ? m_brushTextSecondary : m_brushText;
     if (sFont && sBrush) {
         m_renderTarget->DrawText(searchDisp.c_str(), static_cast<UINT32>(searchDisp.length()), 
-                                 sFont, textRect, sBrush);
+                                 sFont, textRect, sBrush, D2D1_DRAW_TEXT_OPTIONS_CLIP);
     }
 
     // 3. Separator below search box
     m_renderTarget->DrawLine(D2D1::Point2F(0, searchH + 4), D2D1::Point2F(w, searchH + 4), m_brushBorder, 1.0f);
 
     // 4. List Items
-    float itemH = 44.0f * m_dpiScale;
+    float itemH = 48.0f * m_dpiScale;
     float listY = searchH + 6.0f;
     float footerH = 26.0f * m_dpiScale;
     int maxVisible = static_cast<int>((h - listY - footerH) / itemH);
@@ -254,7 +280,7 @@ void PopupPicker::render() {
         D2D1_RECT_F emptyRect = D2D1::RectF(20.0f, listY + 30.0f, w - 20.0f, listY + 70.0f);
         if (m_fontRegular && m_brushTextSecondary) {
             m_renderTarget->DrawText(emptyMsg.c_str(), static_cast<UINT32>(emptyMsg.length()),
-                                     m_fontRegular, emptyRect, m_brushTextSecondary);
+                                     m_fontRegular, emptyRect, m_brushTextSecondary, D2D1_DRAW_TEXT_OPTIONS_CLIP);
         }
     } else {
         for (int i = 0; i < std::min<int>(static_cast<int>(m_items.size()), maxVisible); ++i) {
@@ -263,31 +289,41 @@ void PopupPicker::render() {
             float itemBottom = itemTop + itemH - 2.0f;
             D2D1_RECT_F itemRect = D2D1::RectF(6.0f, itemTop, w - 6.0f, itemBottom);
 
+            // Clip strictly to item bounds to prevent any bleed across items
+            m_renderTarget->PushAxisAlignedClip(itemRect, D2D1_ANTIALIAS_MODE_PER_PRIMITIVE);
+
             // Selection / Hover background
             if (i == m_selectedIndex) {
                 m_renderTarget->FillRectangle(itemRect, m_brushSelected);
                 // Active left accent indicator bar
-                m_renderTarget->FillRectangle(D2D1::RectF(6.0f, itemTop, 9.0f, itemBottom), m_brushAccent);
+                m_renderTarget->FillRectangle(D2D1::RectF(itemRect.left, itemTop, itemRect.left + 3.0f, itemBottom), m_brushAccent);
             } else if (i == m_hoverIndex) {
                 m_renderTarget->FillRectangle(itemRect, m_brushHover);
             }
 
             // Type icon: [T] or [IMG]
             std::wstring typeBadge = (item.type == ItemType::Text) ? L"T" : L"IMG";
-            D2D1_RECT_F badgeRect = D2D1::RectF(16.0f, itemTop + 4.0f, 44.0f, itemBottom - 4.0f);
+            float badgeW = (item.type == ItemType::Text) ? 26.0f : 34.0f;
+            D2D1_RECT_F badgeRect = D2D1::RectF(itemRect.left + 8.0f, itemTop + 7.0f, itemRect.left + 8.0f + badgeW, itemBottom - 7.0f);
             m_renderTarget->FillRectangle(badgeRect, m_brushSecondary);
             if (m_fontBold) {
+                D2D1_RECT_F badgeTextRect = D2D1::RectF(badgeRect.left, itemTop + 8.0f, badgeRect.right, itemBottom - 6.0f);
                 m_renderTarget->DrawText(typeBadge.c_str(), static_cast<UINT32>(typeBadge.length()),
-                                         m_fontBold, D2D1::RectF(20.0f, itemTop + 8.0f, 44.0f, itemBottom),
-                                         (item.type == ItemType::Text) ? m_brushAccent : m_brushPinned);
+                                         m_fontBold, badgeTextRect,
+                                         (item.type == ItemType::Text) ? m_brushAccent : m_brushPinned,
+                                         D2D1_DRAW_TEXT_OPTIONS_CLIP);
             }
 
-            // Content preview text
-            std::wstring prevW(item.previewText.begin(), item.previewText.end());
-            D2D1_RECT_F textBounds = D2D1::RectF(50.0f, itemTop + 6.0f, w - 50.0f, itemTop + 24.0f);
+            float textLeft = badgeRect.right + 10.0f;
+            float textRight = itemRect.right - 10.0f;
+
+            // Content preview text (UTF-8 converted properly to wide string)
+            std::wstring prevW = D2DContext::utf8ToWide(item.previewText);
+            D2D1_RECT_F textBounds = D2D1::RectF(textLeft, itemTop + 5.0f, textRight, itemTop + 24.0f);
             if (m_fontRegular && m_brushText) {
                 m_renderTarget->DrawText(prevW.c_str(), static_cast<UINT32>(prevW.length()),
-                                         m_fontRegular, textBounds, m_brushText);
+                                         m_fontRegular, textBounds, m_brushText,
+                                         D2D1_DRAW_TEXT_OPTIONS_CLIP);
             }
 
             // Metadata info (chars or dimensions)
@@ -296,11 +332,15 @@ void PopupPicker::render() {
                 : std::to_wstring(item.imageMeta.width) + L"x" + std::to_wstring(item.imageMeta.height);
             if (item.pinned) metaW += L"  ★ pinned";
 
-            D2D1_RECT_F metaBounds = D2D1::RectF(50.0f, itemTop + 24.0f, w - 16.0f, itemBottom);
+            D2D1_RECT_F metaBounds = D2D1::RectF(textLeft, itemTop + 25.0f, textRight, itemBottom - 3.0f);
             if (m_fontSmall && m_brushTextSecondary) {
                 m_renderTarget->DrawText(metaW.c_str(), static_cast<UINT32>(metaW.length()),
-                                         m_fontSmall, metaBounds, item.pinned ? m_brushPinned : m_brushTextSecondary);
+                                         m_fontSmall, metaBounds, 
+                                         item.pinned ? m_brushPinned : m_brushTextSecondary,
+                                         D2D1_DRAW_TEXT_OPTIONS_CLIP);
             }
+
+            m_renderTarget->PopAxisAlignedClip();
         }
     }
 

@@ -424,7 +424,7 @@ export const ClipHubSimulator: React.FC = () => {
                         <div className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[#5C8DFF] rounded-r" />
                       )}
 
-                      <div className="flex items-center gap-2.5 overflow-hidden pl-1">
+                      <div className="flex items-center gap-2.5 overflow-hidden pl-1 min-w-0 flex-1">
                         {/* Type Badge */}
                         <span className={`px-1.5 py-0.5 rounded font-mono font-bold text-[10px] shrink-0 ${
                           item.type === 'text' 
@@ -434,11 +434,11 @@ export const ClipHubSimulator: React.FC = () => {
                           {item.type === 'text' ? 'T' : 'IMG'}
                         </span>
 
-                        <div className="overflow-hidden">
-                          <p className="truncate text-gray-200 font-medium">
+                        <div className="overflow-hidden min-w-0 flex-1">
+                          <p className="truncate whitespace-nowrap text-gray-200 font-medium leading-tight">
                             {item.preview}
                           </p>
-                          <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-0.5">
+                          <div className="flex items-center gap-2 text-[10px] text-gray-400 mt-1 whitespace-nowrap overflow-hidden">
                             <span>{item.timestamp}</span>
                             <span>•</span>
                             <span>{item.type === 'text' ? `${item.charCount} chars` : `${item.width}x${item.height} PNG`}</span>
